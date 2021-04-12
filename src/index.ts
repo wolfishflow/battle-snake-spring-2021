@@ -1,5 +1,7 @@
 const bodyParser = require('body-parser')
 const express = require('express')
+import * as model from './models';
+import {Directions} from './constants';
 
 const PORT = process.env.PORT || 3000
 
@@ -28,11 +30,9 @@ function handleIndex(request, response) {
 }
 
 function handleStart(request, response) {
-  var gameData = request.body
+  const gameData = request.body as model.GameData;
 
-  console.log(gameData)
-
-
+  console.log(JSON.stringify(gameData))
   console.log('START')
   response.status(200).send('ok')
 }
@@ -56,43 +56,6 @@ function handleEnd(request, response) {
   response.status(200).send('ok')
 }
 
-interface Game {
-  id: string,
-  ruleset: RuleSet,
-  timeout: number
-}
 
-interface RuleSet {
-  name: string,
-  version: string
-}
 
-interface Coordinate {
-  x: number,
-  y: number
-}
 
-interface BattleSnake {
-  id: string,
-  name: string,
-  health: number,
-  body: Array<Coordinate>,
-  latency: string,
-  head: Coordinate,
-  length: number,
-  shout: string,
-  squad: string
-}
-
-interface Board {
-  height: number,
-  width: number,
-  food: Array<Coordinate>
-  hazards: Array<Coordinate>
-  snakes: Array<BattleSnake>
-}
-
-interface Move {
-  move: string,
-  shout: string,
-}
