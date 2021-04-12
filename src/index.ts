@@ -31,6 +31,8 @@ function handleStart(request, response) {
   var gameData = request.body
 
   console.log(gameData)
+
+
   console.log('START')
   response.status(200).send('ok')
 }
@@ -52,4 +54,45 @@ function handleEnd(request, response) {
 
   console.log('END')
   response.status(200).send('ok')
+}
+
+interface Game {
+  id: string,
+  ruleset: RuleSet,
+  timeout: number
+}
+
+interface RuleSet {
+  name: string,
+  version: string
+}
+
+interface Coordinate {
+  x: number,
+  y: number
+}
+
+interface BattleSnake {
+  id: string,
+  name: string,
+  health: number,
+  body: Array<Coordinate>,
+  latency: string,
+  head: Coordinate,
+  length: number,
+  shout: string,
+  squad: string
+}
+
+interface Board {
+  height: number,
+  width: number,
+  food: Array<Coordinate>
+  hazards: Array<Coordinate>
+  snakes: Array<BattleSnake>
+}
+
+interface Move {
+  move: string,
+  shout: string,
 }
