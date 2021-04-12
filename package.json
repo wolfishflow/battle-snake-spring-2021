@@ -2,11 +2,9 @@
   "name": "battle-snake-spring-2021",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/app.js",
+  "main": "dist/index.js",
   "scripts": {
-    "start": "npm run build:live",
-    "build": "tsc -p .",
-    "build:live": "nodemon --watch 'src/**/*.ts' --exec \"ts-node\" src/index.ts",
+    "start": "tsc && node dist/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -28,6 +26,7 @@
     "typescript": "^3.9.9"
   },
   "dependencies": {
+    "eslint": "^7.24.0",
     "express": "^4.16.4"
   }
 }
