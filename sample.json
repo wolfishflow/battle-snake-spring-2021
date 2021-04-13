@@ -1,0 +1,80 @@
+{
+    "game": {
+        "id": "fb7a5101-76e3-4fd2-aca9-52a86499755f",
+        "ruleset": {
+            "name": "solo",
+            "version": "v1.0.17"
+        },
+        "timeout": 500
+    },
+    "turn": 0,
+    "board": {
+        "height": 11,
+        "width": 11,
+        "snakes": [
+            {
+                "id": "gs_WGhyKJMmfGSDYbDt6M9SGDK6",
+                "name": "RBC Snek",
+                "latency": "",
+                "health": 100,
+                "body": [
+                    {
+                        "x": 5,
+                        "y": 9
+                    },
+                    {
+                        "x": 5,
+                        "y": 9
+                    },
+                    {
+                        "x": 5,
+                        "y": 9
+                    }
+                ],
+                "head": {
+                    "x": 5,
+                    "y": 9
+                },
+                "length": 3,
+                "shout": ""
+            }
+        ],
+        "food": [
+            {
+                "x": 6,
+                "y": 8
+            },
+            {
+                "x": 5,
+                "y": 5
+            }
+        ],
+        "hazards": []
+    },
+    "you": {
+        "id": "gs_WGhyKJMmfGSDYbDt6M9SGDK6",
+        "name": "RBC Snek",
+        "latency": "",
+        "health": 100,
+        "body": [
+            {
+                "x": 5,
+                "y": 9
+            },
+            {
+                "x": 5,
+                "y": 9
+            },
+            {
+                "x": 5,
+                "y": 9
+            }
+        ],
+        "head": {
+            "x": 5,
+            "y": 9
+        },
+        "length": 3,
+        "shout": ""
+    }
+}
