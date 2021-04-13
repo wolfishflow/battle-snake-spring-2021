@@ -41,23 +41,21 @@ function handleMove(request, response) {
   const move = getWallSafeMove(gameData.you.head, gameData.you.body[1])
 
   response.status(200).send({
-    move: move.move
+    move: move
   })
 }
 
-function getWallSafeMove(headCoordinate: model.Coordinate, bodyCoordinate: model.Coordinate) {
-
-  var nextMove: model.Move
+function getWallSafeMove(headCoordinate: model.Coordinate, bodyCoordinate: model.Coordinate): string {
 
   // Top Left Corner (0,0)
   if (headCoordinate.x == 0 && headCoordinate.y == 0) {
     // If the head shares the same x value as the second body part - they are in the same col 
     if (headCoordinate.x == bodyCoordinate.x) {
       // Go Right
-      nextMove.move = Directions.RIGHT
+      return Directions.RIGHT
     } else {
       // Go Down
-      nextMove.move = Directions.DOWN
+      return Directions.DOWN
     }
   }
 
@@ -66,10 +64,10 @@ function getWallSafeMove(headCoordinate: model.Coordinate, bodyCoordinate: model
     // If the head shares the same x value as the second body part - they are in the same col 
     if (headCoordinate.x == bodyCoordinate.x) {
       // Go Right
-      nextMove.move = Directions.LEFT
+      return Directions.LEFT
     } else {
       // Go Down
-      nextMove.move = Directions.DOWN
+      return Directions.DOWN
     }
   }
 
@@ -78,10 +76,10 @@ function getWallSafeMove(headCoordinate: model.Coordinate, bodyCoordinate: model
     // If the head shares the same x value as the second body part - they are in the same col 
     if (headCoordinate.x == bodyCoordinate.x) {
       // Go Right
-      nextMove.move = Directions.RIGHT
+      return Directions.RIGHT
     } else {
       // Go Up
-      nextMove.move = Directions.UP
+      return Directions.UP
     }
   }
 
@@ -90,10 +88,10 @@ function getWallSafeMove(headCoordinate: model.Coordinate, bodyCoordinate: model
     // If the head shares the same x value as the second body part - they are in the same col 
     if (headCoordinate.x == bodyCoordinate.x) {
       // Go Left
-      nextMove.move = Directions.LEFT
+      return Directions.LEFT
     } else {
       // Go Up
-      nextMove.move = Directions.UP
+      return Directions.UP
     }
   }
 
@@ -106,16 +104,16 @@ function getWallSafeMove(headCoordinate: model.Coordinate, bodyCoordinate: model
       // Avoid colliding with body
       // Same Col - TODO determine optimal up/down? 
       if (headCoordinate.x == bodyCoordinate.x) {
-        nextMove.move = Directions.RIGHT //TODO determine if this is a safe move - could still hit own body
+        return Directions.RIGHT //TODO determine if this is a safe move - could still hit own body
       } else {
-        nextMove.move = Directions.DOWN
+        return Directions.DOWN
       }
     } else {
       // Right Wall
-      if (headCoordinate.x == bodyCoordinate.x) {
-        nextMove.move = Directions.LEFT //TODO determine if this is a safe move - could still hit own body
+      if (headCoordinate.x == bodyCoordinate.x ) {
+        return Directions.LEFT //TODO determine if this is a safe move - could still hit own body
       } else {
-        nextMove.move = Directions.UP
+        return Directions.UP
       }
     }
 
@@ -130,21 +128,21 @@ function getWallSafeMove(headCoordinate: model.Coordinate, bodyCoordinate: model
       // Avoid colliding with body
       // Same Col - TODO determine optimal up/down? 
       if (headCoordinate.y == bodyCoordinate.y) {
-        nextMove.move = Directions.DOWN //TODO determine if this is a safe move - could still hit own body
+        return Directions.DOWN //TODO determine if this is a safe move - could still hit own body
       } else {
-        nextMove.move = Directions.RIGHT
+        return Directions.RIGHT
       }
     } else {
       // Down Wall
       if (headCoordinate.y == bodyCoordinate.y) {
-        nextMove.move = Directions.UP //TODO determine if this is a safe move - could still hit own body
+        return Directions.UP //TODO determine if this is a safe move - could still hit own body
       } else {
-        nextMove.move = Directions.LEFT
+        return Directions.LEFT
       }
     }
   }
 
-  return nextMove
+  return Directions.RIGHT
 }
 
 function handleEnd(request, response) {

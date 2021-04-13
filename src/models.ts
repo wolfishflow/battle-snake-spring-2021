@@ -36,7 +36,7 @@ export interface Board {
 
 export interface Move {
     move: string,
-    shout: string,
+    shout?: string,
 }
 
 export interface GameData {
