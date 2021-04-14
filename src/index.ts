@@ -38,114 +38,67 @@ function handleMove(request, response) {
 
   console.log(JSON.stringify(gameData))
 
-  const move = getWallSafeMove(gameData.you.head, gameData.you.body[1])
-
+  const validMoves = nextSafeMove(gameData.you.head, gameData.you.body)
   response.status(200).send({
-    move: move.move
+    move: validMoves
   })
 }
 
-function getWallSafeMove(headCoordinate: model.Coordinate, bodyCoordinate: model.Coordinate) {
+function nextSafeMove(head: model.Coordinate, body: model.Coordinate[]): Directions {
 
-  var nextMove: model.Move
 
-  // Top Left Corner (0,0)
-  if (headCoordinate.x == 0 && headCoordinate.y == 0) {
-    // If the head shares the same x value as the second body part - they are in the same col 
-    if (headCoordinate.x == bodyCoordinate.x) {
-      // Go Right
-      nextMove.move = Directions.RIGHT
-    } else {
-      // Go Down
-      nextMove.move = Directions.DOWN
-    }
+
+  // Up
+  const up = new model.Coordinate(head.x, head.y + 1)
+  // Down
+  const down = new model.Coordinate(head.x, head.y - 1)
+  // Left
+  const left = new model.Coordinate(head.x - 1, head.y)
+  // Right
+  const right = new model.Coordinate(head.x + 1, head.y)
+
+
+  let possibleMoves: model.Coordinate[] = [up, down, left, right]
+
+
+  let validMoves = possibleMoves.filter(move => isValidCoordinate(move) && isNotSelfCollision(move, body))
+
+  switch (validMoves[0]) {
+    case up:
+      console.log(Directions.UP)
+      return Directions.UP
+    case down:
+      console.log(Directions.DOWN)
+      return Directions.DOWN
+    case left:
+      console.log(Directions.LEFT)
+      return Directions.LEFT
+    case right:
+      console.log(Directions.RIGHT)
+      return Directions.RIGHT
+    default:
+      //GG - we're ded
+      console.log("GG")
+      return Directions.UP
   }
 
-  // Top Right Corner (10,0)
-  if (headCoordinate.x == 10 && headCoordinate.y == 0) {
-    // If the head shares the same x value as the second body part - they are in the same col 
-    if (headCoordinate.x == bodyCoordinate.x) {
-      // Go Right
-      nextMove.move = Directions.LEFT
-    } else {
-      // Go Down
-      nextMove.move = Directions.DOWN
-    }
-  }
-
-  // Bottom Left Corner (0,10)
-  if (headCoordinate.x == 0 && headCoordinate.y == 10) {
-    // If the head shares the same x value as the second body part - they are in the same col 
-    if (headCoordinate.x == bodyCoordinate.x) {
-      // Go Right
-      nextMove.move = Directions.RIGHT
-    } else {
-      // Go Up
-      nextMove.move = Directions.UP
-    }
-  }
-
-  // Bottom Right Corner (10,10)
-  if (headCoordinate.x == 10 && headCoordinate.y == 10) {
-    // If the head shares the same x value as the second body part - they are in the same col 
-    if (headCoordinate.x == bodyCoordinate.x) {
-      // Go Left
-      nextMove.move = Directions.LEFT
-    } else {
-      // Go Up
-      nextMove.move = Directions.UP
-    }
-  }
-
-  // Left Wall && Right Wall
-  if (headCoordinate.x == 0 || headCoordinate.x == 10) {
-    //This needs optimization based on an objective (food, hazard, other snake?)
-
-    // Left Wall
-    if (headCoordinate.x == 0) {
-      // Avoid colliding with body
-      // Same Col - TODO determine optimal up/down? 
-      if (headCoordinate.x == bodyCoordinate.x) {
-        nextMove.move = Directions.RIGHT //TODO determine if this is a safe move - could still hit own body
-      } else {
-        nextMove.move = Directions.DOWN
-      }
-    } else {
-      // Right Wall
-      if (headCoordinate.x == bodyCoordinate.x) {
-        nextMove.move = Directions.LEFT //TODO determine if this is a safe move - could still hit own body
-      } else {
-        nextMove.move = Directions.UP
-      }
-    }
-
-  }
-
-  // Up Wall && Down Wall
-  if (headCoordinate.y == 0 || headCoordinate.y == 10) {
-    //This needs optimization based on an objective (food, hazard, other snake?)
-
-    // Up Wall
-    if (headCoordinate.y == 0) {
-      // Avoid colliding with body
-      // Same Col - TODO determine optimal up/down? 
-      if (headCoordinate.y == bodyCoordinate.y) {
-        nextMove.move = Directions.DOWN //TODO determine if this is a safe move - could still hit own body
-      } else {
-        nextMove.move = Directions.RIGHT
-      }
-    } else {
-      // Down Wall
-      if (headCoordinate.y == bodyCoordinate.y) {
-        nextMove.move = Directions.UP //TODO determine if this is a safe move - could still hit own body
-      } else {
-        nextMove.move = Directions.LEFT
-      }
-    }
-  }
-
-  return nextMove
 }
+
+function isValidCoordinate(coordinate: model.Coordinate): boolean {
+  return !(coordinate.x < 0 || coordinate.x > 10 || coordinate.y < 0 || coordinate.y > 10)
+}
+
+function isNotSelfCollision(coordinate: model.Coordinate, body: Array<model.Coordinate>): boolean {
+  for (let bodyCoordinate of body) {
+    // would result in self collision
+    if (coordinate.x == bodyCoordinate.x && coordinate.y == bodyCoordinate.y) {
+      return false
+    }
+  }
+
+  return true
+}
+
 
 function handleEnd(request, response) {
   var gameData = request.body
