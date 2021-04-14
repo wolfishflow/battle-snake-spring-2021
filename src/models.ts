@@ -9,9 +9,14 @@ export interface RuleSet {
     version: string
 }
 
-export interface Coordinate {
-    x: number,
-    y: number
+export class Coordinate {
+    x: number;
+    y: number;
+
+    constructor(x: number, y:number) {
+        this.x = x
+        this.y = y
+    }
 }
 
 export interface BattleSnake {
@@ -34,9 +39,14 @@ export interface Board {
     snakes: Array<BattleSnake>
 }
 
-export interface Move {
-    move: string,
-    shout?: string,
+export class Move {
+    move: string;
+    shout?: string;
+
+    constructor(move: string, shout?: string) {
+        this.move = move
+        this.shout = shout
+    }
 }
 
 export interface GameData {
