@@ -40,19 +40,24 @@ function handleStart(request, response) {
 function handleMove(request, response) {
   const gameData = request.body as model.GameData;
 
+  const opponentSnake = gameData.board.snakes.filter(snake => snake.id != gameData.you.id)[0]
+  //concat perf may suck?
+  const validMoves = foo(gameData.you.head, gameData.you.body.concat(opponentSnake.body))
+
   // determine if we need to eat (for now lets eat at 50 or below)
   if (gameData.you.health < 50) {
     // based on closest 5 food - pick the one that is A) Closest and B) is ideally farthest from opponent
     const fiveClosestFood = getClosestFood(gameData.you.head, gameData.board)
     // Then move towards food
     // We need a direction that matches safe directions
+  } else {
+    
   }
 
   // If we don't need to eat, chase tail
 
-  const validMoves = nextSafeMove(gameData.you.head, gameData.you.body)
   response.status(200).send({
-    move: validMoves
+    move: validMoves[0]
   })
 }
 
@@ -102,6 +107,23 @@ function nextSafeMove(head: model.Coordinate, body: model.Coordinate[]): Directi
   }
 
 }
+
+
+//TODO change return signature to provide all valid moves and directions as a Tuple
+// ie: return (Coordinate, Directions) []
+// TODO update {body} to be an array of bodies? since we need to evalute against both our body and opponent
+function foo(head: model.Coordinate, body: model.Coordinate[]) : [model.Coordinate, Directions][] {
+
+  const possibleMoves: [model.Coordinate, Directions][] = [
+    [new model.Coordinate(head.x, head.y + 1), Directions.UP],
+    [new model.Coordinate(head.x, head.y - 1), Directions.DOWN],
+    [new model.Coordinate(head.x - 1, head.y), Directions.LEFT],
+    [new model.Coordinate(head.x + 1, head.y), Directions.RIGHT]
+  ]
+
+  return possibleMoves.filter(([move]) => isValidCoordinate(move) && isNotCollision(move, body))
+}
+
 
 // TODO - determine conditions that would push for and against food moves
 function isFoodNeeded(): boolean {
