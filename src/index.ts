@@ -29,6 +29,8 @@ function handleIndex(request, response) {
   response.status(200).json(battlesnakeInfo)
 }
 
+// Game Functions
+
 function handleStart(request, response) {
   response.status(200).send('ok')
 }
@@ -36,7 +38,8 @@ function handleStart(request, response) {
 function handleMove(request, response) {
   const gameData = request.body as model.GameData;
 
-  console.log(JSON.stringify(gameData))
+  //TODO
+  getClosestFood(gameData.you.head, gameData.board)
 
   const validMoves = nextSafeMove(gameData.you.head, gameData.you.body)
   response.status(200).send({
@@ -44,9 +47,18 @@ function handleMove(request, response) {
   })
 }
 
+function handleEnd(request, response) {
+  console.log('END')
+  response.status(200).send('ok')
+}
+
+
+// Specific Snake Functions
+
+//TODO change return signature to provide all valid moves and directions as a Tuple
+// ie: return (Coordinate, Directions) []
+// TODO update {body} to be an array of bodies? since we need to evalute against both our body and opponent
 function nextSafeMove(head: model.Coordinate, body: model.Coordinate[]): Directions {
-
-
 
   // Up
   const up = new model.Coordinate(head.x, head.y + 1)
@@ -57,11 +69,9 @@ function nextSafeMove(head: model.Coordinate, body: model.Coordinate[]): Directi
   // Right
   const right = new model.Coordinate(head.x + 1, head.y)
 
+  const possibleMoves: model.Coordinate[] = [up, down, left, right]
 
-  let possibleMoves: model.Coordinate[] = [up, down, left, right]
-
-
-  let validMoves = possibleMoves.filter(move => isValidCoordinate(move) && isNotSelfCollision(move, body))
+  const validMoves = possibleMoves.filter(move => isValidCoordinate(move) && isNotCollision(move, body))
 
   switch (validMoves[0]) {
     case up:
@@ -84,13 +94,63 @@ function nextSafeMove(head: model.Coordinate, body: model.Coordinate[]): Directi
 
 }
 
+// TODO - determine conditions that would push for and against food moves
+function isFoodNeeded(): boolean {
+  return true
+}
+
+
+// TODO - consider other snakes in proximity of the closet food - especially if they're closer
+// TODO UPDATE - Wrote isFoodCloserToOurSnakeVsOpponentSnake() but still need a func to handle all the decisions
+function getClosestFood(head: model.Coordinate, board: model.Board,) {
+  let startingPoint = head
+
+  //determine closest food in reference to the starting point
+
+  // naive approach - subtract all food coordinates from head
+  // populate a map via amount of turns by coordinate of food
+  // convert map to array and sort by lowest turns - and take (n) amount from array
+  // then return (n) amount array
+
+  let map = new Map<number, model.Coordinate>()
+
+  for (let coordinate of board.food) {
+    map.set(getDistanceBetweenTwoPoints(head, coordinate), coordinate)
+  }
+
+  // Array.from(map).filter { ([distance, food]) =>  }
+  // determine (n) 
+  let abc = Array.from(map).sort(([distanceA], [distanceB]) => distanceA - distanceB)
+
+  console.log(abc)
+}
+
+function getOpponentDistanceToFood(board: model.Board, myId: string, food: model.Coordinate): number {
+  //NPE?
+  // board.snakes will return all snakes including ourself so we need to filter ourself out
+  let opponentSnake = board.snakes.filter(snake => snake.id != myId)[0]
+  return getDistanceBetweenTwoPoints(opponentSnake.head, food)
+}
+
+
+//TODO name this better? Do we even need this function? Inline might be better overall
+// FUNC - Depending on the distance from our snake head and food, and opponent snake head and food - either return true or false
+function isFoodCloserToOurSnakeVsOpponentSnake(distanceFromOurSnakeHead: number, distanceFromOpponentSnakeHead: number): boolean {
+  return distanceFromOurSnakeHead > distanceFromOpponentSnakeHead
+}
+
+
+// --------------------- General Functions ------------------------------
+
+// Standard Board size is 11 by 11 (0 indexed ie 0-10 by 0-10)
 function isValidCoordinate(coordinate: model.Coordinate): boolean {
   return !(coordinate.x < 0 || coordinate.x > 10 || coordinate.y < 0 || coordinate.y > 10)
 }
 
-function isNotSelfCollision(coordinate: model.Coordinate, body: Array<model.Coordinate>): boolean {
+//TODO can probably refactor and use it for both self collision and opponent collision?
+function isNotCollision(coordinate: model.Coordinate, body: Array<model.Coordinate>): boolean {
   for (let bodyCoordinate of body) {
-    // would result in self collision
+    // would result in a collision
     if (coordinate.x == bodyCoordinate.x && coordinate.y == bodyCoordinate.y) {
       return false
     }
@@ -99,14 +159,6 @@ function isNotSelfCollision(coordinate: model.Coordinate, body: Array<model.Coor
   return true
 }
 
-
-function handleEnd(request, response) {
-  var gameData = request.body
-
-  console.log('END')
-  response.status(200).send('ok')
+function getDistanceBetweenTwoPoints(pointA: model.Coordinate, pointB: model.Coordinate): number {
+  return Math.abs(pointA.x - pointB.x) + Math.abs(pointA.y - pointB.y)
 }
-
-
-
-
