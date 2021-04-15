@@ -40,9 +40,27 @@ function handleStart(request, response) {
 function handleMove(request, response) {
   const gameData = request.body as model.GameData;
 
+  //Check if we have an opponent
   const opponentSnake = gameData.board.snakes.filter(snake => snake.id != gameData.you.id)[0]
+
+  if (opponentSnake == null) {
+    const validMoves = foo(gameData.you.head, gameData.you.body)
+
+    response.status(200).send({
+      move: validMoves[0][1]
+    })
+  } else {
+    const validMoves = foo(gameData.you.head, gameData.you.body.concat(opponentSnake.body))
+
+    response.status(200).send({
+      move: validMoves[0][1]
+    })
+  }
+  //else we are solo 
+
   //concat perf may suck?
-  const validMoves = foo(gameData.you.head, gameData.you.body.concat(opponentSnake.body))
+
+  console.log(opponentSnake)
 
   // determine if we need to eat (for now lets eat at 50 or below)
   if (gameData.you.health < 50) {
@@ -56,9 +74,7 @@ function handleMove(request, response) {
 
   // If we don't need to eat, chase tail
 
-  response.status(200).send({
-    move: validMoves[0]
-  })
+  
 }
 
 function handleEnd(request, response) {
