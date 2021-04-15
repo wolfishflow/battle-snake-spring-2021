@@ -43,34 +43,58 @@ function handleMove(request, response) {
   //Check if we have an opponent
   const opponentSnake = gameData.board.snakes.filter(snake => snake.id != gameData.you.id)[0]
 
-  if (opponentSnake == null) {
-    const validMoves = foo(gameData.you.head, gameData.you.body)
+  // if (opponentSnake == null) {
+  //   const validMoves = foo(gameData.you.head, gameData.you.body)
 
-    response.status(200).send({
-      move: validMoves[0][1]
-    })
-  } else {
-    const validMoves = foo(gameData.you.head, gameData.you.body.concat(opponentSnake.body))
+  //   response.status(200).send({
+  //     move: validMoves[0][1]
+  //   })
+  // } else {
+  //   const validMoves = foo(gameData.you.head, gameData.you.body.concat(opponentSnake.body))
 
-    response.status(200).send({
-      move: validMoves[0][1]
-    })
-  }
+  //   response.status(200).send({
+  //     move: validMoves[0][1]
+  //   })
+  // }
   //else we are solo 
 
   //concat perf may suck?
 
-  console.log(opponentSnake)
+  // console.log(opponentSnake)
 
   // determine if we need to eat (for now lets eat at 50 or below)
-  if (gameData.you.health < 50) {
+  // if (gameData.you.health < 50) {
     // based on closest 5 food - pick the one that is A) Closest and B) is ideally farthest from opponent
-    const fiveClosestFood = getClosestFood(gameData.you.head, gameData.board)
+    // const fiveClosestFood = getClosestFood(gameData.you.head, gameData.board)
+    const validMoves = foo(gameData.you.head, gameData.you.body)
     // Then move towards food
+    const prioritizedMove =  nextSafeMoveWithFood(gameData.you.head, gameData.you.body, gameData.board)
+
+    //Note: moveToUse can be empty which will cause a crash, but we were going to die anyway
+
+    var moveToUse = validMoves[0][1]
+    console.log("valid move")
+    console.log(validMoves)
+    console.log("original move")
+    console.log(moveToUse)
+    console.log("priotized move")
+    console.log(prioritizedMove)
+
+    if (prioritizedMove != null) {
+      console.log("priotized move: ")
+      console.log(prioritizedMove[1])
+      moveToUse = prioritizedMove[1]
+      console.log("done moving")
+    }
+
+    response.status(200).send({
+      move: moveToUse
+    })
+
     // We need a direction that matches safe directions
-  } else {
+  // } else {
     
-  }
+  // }
 
   // If we don't need to eat, chase tail
 
@@ -124,6 +148,25 @@ function nextSafeMove(head: model.Coordinate, body: model.Coordinate[]): Directi
 
 }
 
+// Note: this is returning one, but i guess we could return an array
+function nextSafeMoveWithFood(head: model.Coordinate, body: model.Coordinate[], board: model.Board) : [model.Coordinate, Directions] {
+  const nextSafeMoves = foo(head, body)
+
+  let map = new Map<number, model.Coordinate>()
+
+  for (let move of nextSafeMoves) {
+    const moveCoordinate = move[0]
+    
+    for (let foodCoordinate of board.food) {
+
+      if (foodCoordinate.x == moveCoordinate.x && foodCoordinate.y == moveCoordinate.y) {
+        return move
+      }
+    }
+  }
+}
+
+
 
 //TODO change return signature to provide all valid moves and directions as a Tuple
 // ie: return (Coordinate, Directions) []
@@ -136,6 +179,8 @@ function foo(head: model.Coordinate, body: model.Coordinate[]) : [model.Coordina
     [new model.Coordinate(head.x - 1, head.y), Directions.LEFT],
     [new model.Coordinate(head.x + 1, head.y), Directions.RIGHT]
   ]
+
+  // TODO: always return at least one move, even if its not valid
 
   return possibleMoves.filter(([move]) => isValidCoordinate(move) && isNotCollision(move, body))
 }
