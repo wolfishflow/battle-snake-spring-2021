@@ -17,6 +17,8 @@ app.post('/end', handleEnd)
 
 app.listen(PORT, () => console.log(`Battlesnake Server listening at http://127.0.0.1:${PORT}`))
 
+//npm start
+//battlesnake play -W 11 -H 11 --name RBCSnek --url http://127.0.0.1:3000/ -g solo -v
 
 function handleIndex(request, response) {
   var battlesnakeInfo = {
@@ -38,8 +40,15 @@ function handleStart(request, response) {
 function handleMove(request, response) {
   const gameData = request.body as model.GameData;
 
-  //TODO
-  getClosestFood(gameData.you.head, gameData.board)
+  // determine if we need to eat (for now lets eat at 50 or below)
+  if (gameData.you.health < 50) {
+    // based on closest 5 food - pick the one that is A) Closest and B) is ideally farthest from opponent
+    const fiveClosestFood = getClosestFood(gameData.you.head, gameData.board)
+    // Then move towards food
+    // We need a direction that matches safe directions
+  }
+
+  // If we don't need to eat, chase tail
 
   const validMoves = nextSafeMove(gameData.you.head, gameData.you.body)
   response.status(200).send({
@@ -120,9 +129,11 @@ function getClosestFood(head: model.Coordinate, board: model.Board,) {
 
   // Array.from(map).filter { ([distance, food]) =>  }
   // determine (n) 
-  let abc = Array.from(map).sort(([distanceA], [distanceB]) => distanceA - distanceB)
+  let fiveOfTheClosestFood = Array.from(map).sort(([distanceA], [distanceB]) => distanceA - distanceB).slice(5)
 
-  console.log(abc)
+  console.log(fiveOfTheClosestFood)
+
+  return fiveOfTheClosestFood
 }
 
 function getOpponentDistanceToFood(board: model.Board, myId: string, food: model.Coordinate): number {
