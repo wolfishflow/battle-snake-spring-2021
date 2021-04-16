@@ -2,6 +2,8 @@ const bodyParser = require('body-parser')
 const express = require('express')
 import * as model from './models';
 import { Directions } from './constants';
+import e from 'express';
+import { nextTick } from 'node:process';
 
 const PORT = process.env.PORT || 3000
 
@@ -64,41 +66,41 @@ function handleMove(request, response) {
 
   // determine if we need to eat (for now lets eat at 50 or below)
   // if (gameData.you.health < 50) {
-    // based on closest 5 food - pick the one that is A) Closest and B) is ideally farthest from opponent
-    // const fiveClosestFood = getClosestFood(gameData.you.head, gameData.board)
-    const validMoves = foo(gameData.you.head, gameData.you.body)
-    // Then move towards food
-    const prioritizedMove =  nextSafeMoveWithFood(gameData.you.head, gameData.you.body, gameData.board)
+  // based on closest 5 food - pick the one that is A) Closest and B) is ideally farthest from opponent
+  // const fiveClosestFood = getClosestFood(gameData.you.head, gameData.board)
+  const validMoves = foo(gameData.you.head, gameData.you.body)
+  // Then move towards food
+  const prioritizedMove = nextSafeMoveWithFood(gameData.you.head, gameData.you.body, gameData.board)
 
-    //Note: moveToUse can be empty which will cause a crash, but we were going to die anyway
+  //Note: moveToUse can be empty which will cause a crash, but we were going to die anyway
 
-    var moveToUse = validMoves[0][1]
-    console.log("valid move")
-    console.log(validMoves)
-    console.log("original move")
-    console.log(moveToUse)
-    console.log("priotized move")
-    console.log(prioritizedMove)
+  var moveToUse = validMoves.length == 0 ? getSuicideDirection(gameData.you.body) : validMoves[0][1]
+  console.log("valid move")
+  console.log(validMoves)
+  console.log("original move")
+  console.log(moveToUse)
+  console.log("priotized move")
+  console.log(prioritizedMove)
 
-    if (prioritizedMove != null) {
-      console.log("priotized move: ")
-      console.log(prioritizedMove[1])
-      moveToUse = prioritizedMove[1]
-      console.log("done moving")
-    }
+  if (prioritizedMove != null) {
+    console.log("priotized move: ")
+    console.log(prioritizedMove[1])
+    moveToUse = prioritizedMove[1]
+    console.log("done moving")
+  }
 
-    response.status(200).send({
-      move: moveToUse
-    })
+  response.status(200).send({
+    move: moveToUse
+  })
 
-    // We need a direction that matches safe directions
+  // We need a direction that matches safe directions
   // } else {
-    
+
   // }
 
   // If we don't need to eat, chase tail
 
-  
+
 }
 
 function handleEnd(request, response) {
@@ -149,14 +151,14 @@ function nextSafeMove(head: model.Coordinate, body: model.Coordinate[]): Directi
 }
 
 // Note: this is returning one, but i guess we could return an array
-function nextSafeMoveWithFood(head: model.Coordinate, body: model.Coordinate[], board: model.Board) : [model.Coordinate, Directions] {
+function nextSafeMoveWithFood(head: model.Coordinate, body: model.Coordinate[], board: model.Board): [model.Coordinate, Directions] {
   const nextSafeMoves = foo(head, body)
 
   let map = new Map<number, model.Coordinate>()
 
   for (let move of nextSafeMoves) {
     const moveCoordinate = move[0]
-    
+
     for (let foodCoordinate of board.food) {
 
       if (foodCoordinate.x == moveCoordinate.x && foodCoordinate.y == moveCoordinate.y) {
@@ -171,7 +173,7 @@ function nextSafeMoveWithFood(head: model.Coordinate, body: model.Coordinate[], 
 //TODO change return signature to provide all valid moves and directions as a Tuple
 // ie: return (Coordinate, Directions) []
 // TODO update {body} to be an array of bodies? since we need to evalute against both our body and opponent
-function foo(head: model.Coordinate, body: model.Coordinate[]) : [model.Coordinate, Directions][] {
+function foo(head: model.Coordinate, body: model.Coordinate[]): [model.Coordinate, Directions][] {
 
   const possibleMoves: [model.Coordinate, Directions][] = [
     [new model.Coordinate(head.x, head.y + 1), Directions.UP],
@@ -231,6 +233,25 @@ function getOpponentDistanceToFood(board: model.Board, myId: string, food: model
 // FUNC - Depending on the distance from our snake head and food, and opponent snake head and food - either return true or false
 function isFoodCloserToOurSnakeVsOpponentSnake(distanceFromOurSnakeHead: number, distanceFromOpponentSnakeHead: number): boolean {
   return distanceFromOurSnakeHead > distanceFromOpponentSnakeHead
+}
+
+function getSuicideDirection(body: model.Coordinate[]): Directions {
+  let head = body[0]
+  let neck = body[1]
+  //same row
+  if (head.x == neck.x) {
+    if (head.y > neck.y) {
+      return Directions.DOWN
+    } else {
+      return Directions.UP
+    }
+  } else {
+    if (head.x > neck.x) {
+      return Directions.LEFT
+    } else {
+      return Directions.RIGHT
+    }
+  }
 }
 
 
