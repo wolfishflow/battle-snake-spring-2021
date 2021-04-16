@@ -55,3 +55,25 @@ export interface GameData {
     board: Board,
     you: BattleSnake
 }
+
+//Weightless since all edges are 1 apart
+export class Edge {
+    source: Coordinate;
+    destination: Coordinate;
+
+    constructor (source: Coordinate, destination: Coordinate) {
+        this.source = source
+        this.destination = destination
+    }
+}
+
+export class Graph {    
+    listOfEdges = new Map<Coordinate, Coordinate[]>();
+    
+    public addEdge(edge: Edge) {
+        this.listOfEdges.get(edge.source).push(edge.destination)
+    }
+}
+
+
+

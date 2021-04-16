@@ -72,9 +72,9 @@ function handleMove(request, response) {
   // Then move towards food
   const prioritizedMove = nextSafeMoveWithFood(gameData.you.head, gameData.you.body, gameData.board)
 
-  //Note: moveToUse can be empty which will cause a crash, but we were going to die anyway
-
+  //Note: moveToUse can be empty, so we gotta die
   var moveToUse = validMoves.length == 0 ? getSuicideDirection(gameData.you.body) : validMoves[0][1]
+
   console.log("valid move")
   console.log(validMoves)
   console.log("original move")
@@ -87,6 +87,16 @@ function handleMove(request, response) {
     console.log(prioritizedMove[1])
     moveToUse = prioritizedMove[1]
     console.log("done moving")
+    let graph = new model.Graph()
+
+    //We only need a graph as big as snake length
+    for (let index = 0; index < gameData.you.length; index++) {
+      //1 move is always rules out due to collision
+      for(let possibleMoves = 0; possibleMoves <4; possibleMoves++) {
+        
+      }
+    }
+
   }
 
   response.status(200).send({
