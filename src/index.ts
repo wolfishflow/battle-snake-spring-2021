@@ -39,8 +39,7 @@ function handleStart(request, response) {
 
 function handleMove(request, response) {
   const gameData = request.body as model.GameData;
-
-  //console.log(JSON.stringify(gameData))
+  
   //Check if we have an opponent
   const opponentSnake = gameData.board.snakes.filter(snake => snake.id != gameData.you.id)[0]
 
@@ -53,10 +52,12 @@ function handleMove(request, response) {
   } else {
     var validDirection : Directions
     var validMoves = foo(gameData.you.head, gameData.you.body.concat(opponentSnake.body))
+
+    //TODO only using the closest food rn versus 5
     const fiveOfTheClosestFood = getClosestFood(gameData.you.head, gameData.board)
 
     // Technically there might not be food?
-    if (fiveOfTheClosestFood.length != 0 && gameData.you.health < 50) {
+    if (fiveOfTheClosestFood.length != 0) {
         let directionsToFood = getDirectionsFromTwoCoordinates(gameData.you.head, fiveOfTheClosestFood[0][1])
         let foo = Array.from(validMoves).filter(([ , direction]) => directionsToFood.slice(2).includes(direction))
         if(foo.length == 0) {
@@ -64,10 +65,6 @@ function handleMove(request, response) {
         } else {
           validDirection = foo[0][1]
         }
-        console.log("---validDirections---")
-        console.log(gameData.you.id)
-        console.log(validDirection)
-        console.log("----------")
     }
 
     if (validDirection == null) {
@@ -174,7 +171,7 @@ function getDistanceBetweenTwoPoints(pointA: model.Coordinate, pointB: model.Coo
   return Math.abs(pointA.x - pointB.x) + Math.abs(pointA.y - pointB.y)
 }
 
-function getDirectionsFromTwoCoordinates(start: model.Coordinate, end): Directions[] {
+function getDirectionsFromTwoCoordinates(start: model.Coordinate, end: model.Coordinate): Directions[] {
   var directions = new Array();
   let coordinateA = start
   let coordinateB = end
