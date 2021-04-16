@@ -54,12 +54,12 @@ function handleMove(request, response) {
     var validMoves = foo(gameData.you.head, gameData.you.body.concat(opponentSnake.body))
 
     //TODO only using the closest food rn versus 5
-    const fiveOfTheClosestFood = getClosestFood(gameData.you.head, gameData.board)
-
+    const closestFood = getClosestFood(gameData.you.head, gameData.board)
     // Technically there might not be food?
-    if (fiveOfTheClosestFood.length != 0) {
-        let directionsToFood = getDirectionsFromTwoCoordinates(gameData.you.head, fiveOfTheClosestFood[0][1])
-        let foo = Array.from(validMoves).filter(([ , direction]) => directionsToFood.slice(2).includes(direction))
+    if (closestFood.length != 0) {
+        let directionsToFood = getDirectionsFromTwoCoordinates(gameData.you.head, closestFood[0][1])
+        let foo = Array.from(validMoves).filter(([ , direction]) => directionsToFood[0].includes(direction))
+        console.log(foo)
         if(foo.length == 0) {
           //noop
         } else {
@@ -127,10 +127,10 @@ function getClosestFood(head: model.Coordinate, board: model.Board) : [number, m
   for (let coordinate of board.food) {
     map.set(getDistanceBetweenTwoPoints(head, coordinate), coordinate)
   }
-
+  console.log(map)
   // Array.from(map).filter { ([distance, food]) =>  }
   // determine (n) 
-  return Array.from(map).sort(([distanceA], [distanceB]) => distanceA - distanceB).slice(1)
+  return Array.from(map).sort(([distanceA], [distanceB]) => distanceA - distanceB)
 }
 
 function getOpponentDistanceToFood(board: model.Board, myId: string, food: model.Coordinate): number {
