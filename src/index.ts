@@ -40,6 +40,7 @@ function handleStart(request, response) {
 function handleMove(request, response) {
   const gameData = request.body as model.GameData;
 
+  //console.log(JSON.stringify(gameData))
   //Check if we have an opponent
   const opponentSnake = gameData.board.snakes.filter(snake => snake.id != gameData.you.id)[0]
 
@@ -50,31 +51,37 @@ function handleMove(request, response) {
       move: validMoves[0][1]
     })
   } else {
-    const validMoves = foo(gameData.you.head, gameData.you.body.concat(opponentSnake.body))
+    var validDirection : Directions
+    var validMoves = foo(gameData.you.head, gameData.you.body.concat(opponentSnake.body))
+    const fiveOfTheClosestFood = getClosestFood(gameData.you.head, gameData.board)
+
+    // Technically there might not be food?
+    if (fiveOfTheClosestFood.length != 0 && gameData.you.health < 50) {
+        let directionsToFood = getDirectionsFromTwoCoordinates(gameData.you.head, fiveOfTheClosestFood[0][1])
+        let foo = Array.from(validMoves).filter(([ , direction]) => directionsToFood.slice(2).includes(direction))
+        if(foo.length == 0) {
+          //noop
+        } else {
+          validDirection = foo[0][1]
+        }
+        console.log("---validDirections---")
+        console.log(gameData.you.id)
+        console.log(validDirection)
+        console.log("----------")
+    }
+
+    if (validDirection == null) {
+      if (validMoves.length == 0) {
+        validDirection = getSuicideDirection(gameData.you.body.concat(opponentSnake.body))
+      } else {
+        validDirection = validMoves[0][1]
+      }
+    }
 
     response.status(200).send({
-      move: validMoves[0][1]
+      move: validDirection
     })
   }
-  //else we are solo 
-
-  //concat perf may suck?
-
-  console.log(opponentSnake)
-
-  // determine if we need to eat (for now lets eat at 50 or below)
-  if (gameData.you.health < 50) {
-    // based on closest 5 food - pick the one that is A) Closest and B) is ideally farthest from opponent
-    const fiveClosestFood = getClosestFood(gameData.you.head, gameData.board)
-    // Then move towards food
-    // We need a direction that matches safe directions
-  } else {
-    
-  }
-
-  // If we don't need to eat, chase tail
-
-  
 }
 
 function handleEnd(request, response) {
@@ -88,47 +95,7 @@ function handleEnd(request, response) {
 //TODO change return signature to provide all valid moves and directions as a Tuple
 // ie: return (Coordinate, Directions) []
 // TODO update {body} to be an array of bodies? since we need to evalute against both our body and opponent
-function nextSafeMove(head: model.Coordinate, body: model.Coordinate[]): Directions {
-
-  // Up
-  const up = new model.Coordinate(head.x, head.y + 1)
-  // Down
-  const down = new model.Coordinate(head.x, head.y - 1)
-  // Left
-  const left = new model.Coordinate(head.x - 1, head.y)
-  // Right
-  const right = new model.Coordinate(head.x + 1, head.y)
-
-  const possibleMoves: model.Coordinate[] = [up, down, left, right]
-
-  const validMoves = possibleMoves.filter(move => isValidCoordinate(move) && isNotCollision(move, body))
-
-  switch (validMoves[0]) {
-    case up:
-      console.log(Directions.UP)
-      return Directions.UP
-    case down:
-      console.log(Directions.DOWN)
-      return Directions.DOWN
-    case left:
-      console.log(Directions.LEFT)
-      return Directions.LEFT
-    case right:
-      console.log(Directions.RIGHT)
-      return Directions.RIGHT
-    default:
-      //GG - we're ded
-      console.log("GG")
-      return Directions.UP
-  }
-
-}
-
-
-//TODO change return signature to provide all valid moves and directions as a Tuple
-// ie: return (Coordinate, Directions) []
-// TODO update {body} to be an array of bodies? since we need to evalute against both our body and opponent
-function foo(head: model.Coordinate, body: model.Coordinate[]) : [model.Coordinate, Directions][] {
+function foo(head: model.Coordinate, body: model.Coordinate[]): [model.Coordinate, Directions][] {
 
   const possibleMoves: [model.Coordinate, Directions][] = [
     [new model.Coordinate(head.x, head.y + 1), Directions.UP],
@@ -149,8 +116,7 @@ function isFoodNeeded(): boolean {
 
 // TODO - consider other snakes in proximity of the closet food - especially if they're closer
 // TODO UPDATE - Wrote isFoodCloserToOurSnakeVsOpponentSnake() but still need a func to handle all the decisions
-function getClosestFood(head: model.Coordinate, board: model.Board,) {
-  let startingPoint = head
+function getClosestFood(head: model.Coordinate, board: model.Board) : [number, model.Coordinate][] {
 
   //determine closest food in reference to the starting point
 
@@ -167,11 +133,7 @@ function getClosestFood(head: model.Coordinate, board: model.Board,) {
 
   // Array.from(map).filter { ([distance, food]) =>  }
   // determine (n) 
-  let fiveOfTheClosestFood = Array.from(map).sort(([distanceA], [distanceB]) => distanceA - distanceB).slice(5)
-
-  console.log(fiveOfTheClosestFood)
-
-  return fiveOfTheClosestFood
+  return Array.from(map).sort(([distanceA], [distanceB]) => distanceA - distanceB).slice(1)
 }
 
 function getOpponentDistanceToFood(board: model.Board, myId: string, food: model.Coordinate): number {
@@ -210,4 +172,52 @@ function isNotCollision(coordinate: model.Coordinate, body: Array<model.Coordina
 
 function getDistanceBetweenTwoPoints(pointA: model.Coordinate, pointB: model.Coordinate): number {
   return Math.abs(pointA.x - pointB.x) + Math.abs(pointA.y - pointB.y)
+}
+
+function getDirectionsFromTwoCoordinates(start: model.Coordinate, end): Directions[] {
+  var directions = new Array();
+  let coordinateA = start
+  let coordinateB = end
+
+  while (coordinateA.x != coordinateB.x) {
+    if (coordinateA.x < coordinateB.x) {
+      directions.push(Directions.RIGHT)
+      coordinateA.x++
+    } else {
+      directions.push(Directions.LEFT)
+      coordinateA.x--
+    }
+  }
+
+
+  while (coordinateA.y != coordinateB.y) {
+    if (coordinateA.y < coordinateB.y) {
+      directions.push(Directions.UP)
+      coordinateA.y++
+    } else {
+      directions.push(Directions.DOWN)
+      coordinateA.y--
+    }
+  }
+
+  return directions
+}
+
+function getSuicideDirection(body: model.Coordinate[]): Directions {
+  let head = body[0]
+  let neck = body[1]
+  //same row
+  if (head.x == neck.x) {
+    if (head.y > neck.y) {
+      return Directions.DOWN
+    } else {
+      return Directions.UP
+    }
+  } else {
+    if (head.x > neck.x) {
+      return Directions.LEFT
+    } else {
+      return Directions.RIGHT
+    }
+  }
 }
