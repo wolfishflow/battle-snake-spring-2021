@@ -39,7 +39,7 @@ function handleStart(request, response) {
 
 function handleMove(request, response) {
   const gameData = request.body as model.GameData;
-  
+
   //Check if we have an opponent
   const opponentSnake = gameData.board.snakes.filter(snake => snake.id != gameData.you.id)[0]
 
@@ -50,33 +50,65 @@ function handleMove(request, response) {
       move: validMoves[0][1]
     })
   } else {
-    var validDirection : Directions
+    let shout;
+    var validDirection: Directions
     var validMoves = foo(gameData.you.head, gameData.you.body.concat(opponentSnake.body))
 
+    const movesThatAreSafe = validMoves.filter((validMove) => 
+    // using 9 but definitely should handle more
+        is_there_space(validMove[1], gameData.you, gameData.board, 9));   
     //TODO only using the closest food rn versus 5
     const closestFood = getClosestFood(gameData.you.head, gameData.board)
     // Technically there might not be food?
     if (closestFood.length != 0) {
-        let directionsToFood = getDirectionsFromTwoCoordinates(gameData.you.head, closestFood[0][1])
-        let foo = Array.from(validMoves).filter(([ , direction]) => directionsToFood[0].includes(direction))
-        console.log(foo)
-        if(foo.length == 0) {
-          //noop
-        } else {
-          validDirection = foo[0][1]
-        }
-    }
+      let directionsToFood = getDirectionsFromTwoCoordinates(gameData.you.head, closestFood[0][1])
+      // [up, down, left]
+      // [down, left]
 
-    if (validDirection == null) {
-      if (validMoves.length == 0) {
+      // movesThatAreSafeAndTowardsFood = [up,left]
+      // movesThatAreSafe = [up, down, left]
+
+      // movesThatAreSafe = [up]
+      // directionsToFood = [down, left]
+
+      // movesThatAreSafeAndTowardsFood = []
+      // movesThatAreSafe = [up]
+      let movesThatAreSafeAndTowardsFood = movesThatAreSafe.filter(([, direction]) => {
+        const result = directionsToFood.filter((directonToFood) => {
+          return directonToFood === direction
+        })
+        if(result.length > 0) {
+          return true;
+        } else {
+          return false;
+        }
+      });
+      // console.log("vvvvvvvvvvvvv");
+      // console.log(gameData.you.name)
+      // console.log("MOVES THAT ARE SAFE AND TOWARDS FOOD");
+      // console.log(movesThatAreSafeAndTowardsFood)
+      // console.log(movesThatAreSafe)
+      // console.log(gameData.you.head);
+    
+      if (movesThatAreSafeAndTowardsFood.length === 0 && movesThatAreSafe.length !== 0) {
+        validDirection = movesThatAreSafe[0][1];
+        
+      } else if (movesThatAreSafeAndTowardsFood.length === 0 && movesThatAreSafe.length === 0) {
+        //noop
+        // []
+        // []
         validDirection = getSuicideDirection(gameData.you.body.concat(opponentSnake.body))
+        shout = "For Honour!"
       } else {
-        validDirection = validMoves[0][1]
+        // movesThatAreSafeAndTowardsFood = [up / down / left / right]
+        // TODO Implement
+        validDirection = movesThatAreSafeAndTowardsFood[0][1];
       }
     }
 
     response.status(200).send({
-      move: validDirection
+      move: validDirection,
+      shout: shout
     })
   }
 }
@@ -113,7 +145,7 @@ function isFoodNeeded(): boolean {
 
 // TODO - consider other snakes in proximity of the closet food - especially if they're closer
 // TODO UPDATE - Wrote isFoodCloserToOurSnakeVsOpponentSnake() but still need a func to handle all the decisions
-function getClosestFood(head: model.Coordinate, board: model.Board) : [number, model.Coordinate][] {
+function getClosestFood(head: model.Coordinate, board: model.Board): [number, model.Coordinate][] {
 
   //determine closest food in reference to the starting point
 
@@ -127,7 +159,6 @@ function getClosestFood(head: model.Coordinate, board: model.Board) : [number, m
   for (let coordinate of board.food) {
     map.set(getDistanceBetweenTwoPoints(head, coordinate), coordinate)
   }
-  console.log(map)
   // Array.from(map).filter { ([distance, food]) =>  }
   // determine (n) 
   return Array.from(map).sort(([distanceA], [distanceB]) => distanceA - distanceB)
@@ -151,14 +182,14 @@ function isFoodCloserToOurSnakeVsOpponentSnake(distanceFromOurSnakeHead: number,
 // --------------------- General Functions ------------------------------
 
 function getCoordsForNewMove(coordinate: model.Coordinate, move: Directions): model.Coordinate {
-  if(move === Directions.UP) {
-    return {x: coordinate.x, y: coordinate.y -1}
-  } else if(move === Directions.DOWN) {
-    return {x: coordinate.x, y: coordinate.y + 1}
-  } else if(move === Directions.LEFT) {
-    return {x: coordinate.x-1, y: coordinate.y}
-  } else if(move === Directions.RIGHT) {
-    return {x: coordinate.x+1, y: coordinate.y}
+  if (move === Directions.UP) {
+    return { x: coordinate.x, y: coordinate.y + 1 }
+  } else if (move === Directions.DOWN) {
+    return { x: coordinate.x, y: coordinate.y - 1 }
+  } else if (move === Directions.LEFT) {
+    return { x: coordinate.x - 1, y: coordinate.y }
+  } else if (move === Directions.RIGHT) {
+    return { x: coordinate.x + 1, y: coordinate.y }
   }
 
 }
@@ -177,14 +208,15 @@ function isNotCollision(coordinate: model.Coordinate, body: Array<model.Coordina
   } if (board) {
     //opponent collisions
     const collisions = board.snakes.filter((snake) => {
-      return snake.body.filter((snakeBody) => {
-        if(coordinate.x === snakeBody.x && coordinate.y === snakeBody.y) {
+      const otherBodyCollisions = snake.body.filter((snakeBody) => {
+        if (coordinate.x === snakeBody.x && coordinate.y === snakeBody.y) {
           return true;
         }
         return false;
       });
+      return otherBodyCollisions.length > 0;
     });
-    if(collisions.length > 0) {
+    if (collisions.length > 0) {
       return false;
     }
   }
@@ -247,23 +279,23 @@ function getSuicideDirection(body: model.Coordinate[]): Directions {
 
 function simulateNextMove(snake: model.BattleSnake, moveType): model.BattleSnake {
   let new_head: model.Coordinate = null;
-  if(moveType === Directions.UP) {
-    new_head = {x: snake.head.x, y: snake.head.y - 1}
-  } else if(moveType === Directions.DOWN) {
-    new_head = {x: snake.head.x, y: snake.head.y + 1}
-  } else if(moveType === Directions.RIGHT) {
-    new_head = {x: snake.head.x, y: snake.head.y + 1}
-  } else if(moveType === Directions.LEFT) {
-    new_head = {x: snake.head.x, y: snake.head.y - 1}
+  if (moveType === Directions.UP) {
+    new_head = { x: snake.head.x, y: snake.head.y + 1 }
+  } else if (moveType === Directions.DOWN) {
+    new_head = { x: snake.head.x, y: snake.head.y - 1 }
+  } else if (moveType === Directions.RIGHT) {
+    new_head = { x: snake.head.x + 1, y: snake.head.y }
+  } else if (moveType === Directions.LEFT) {
+    new_head = { x: snake.head.x - 1, y: snake.head.y }
   }
 
   const new_snake_body = snake.body.map((bodySquare) => {
     //Stopping PBR
-    return {...bodySquare};
+    return { ...bodySquare };
   });
 
   //add old snake.head onto first element of snake body
-  new_snake_body.push({...snake.head});
+  new_snake_body.push({ ...snake.head });
   //Remove snake tail
   new_snake_body.pop()
 
@@ -271,8 +303,8 @@ function simulateNextMove(snake: model.BattleSnake, moveType): model.BattleSnake
     ...snake,
     body: new_snake_body,
     head: new_head,
-    health: snake.health-1,
-    length: new_snake_body.length+1
+    health: snake.health - 1,
+    length: new_snake_body.length + 1
   }
 
   return next_turn_snake;
@@ -281,12 +313,12 @@ function simulateNextMove(snake: model.BattleSnake, moveType): model.BattleSnake
 // --------------------- is there space? ------------------------------
 
 
-function is_there_space(move: Directions, snake: model.BattleSnake, board: model.Board, spaceNeeded: number) {
+function is_there_space(move: Directions, snake: model.BattleSnake, board: model.Board, spaceNeeded: number): boolean {
   const newCoords = getCoordsForNewMove(snake.head, move);
-  if(spaceNeeded === 0) {
+  if (spaceNeeded === 1) {
     return true;
   } else if (!isValidCoordinate(newCoords) || !isNotCollision(newCoords, snake.body, board)) {
-    //if the coordinates are valid OR tere is a collision
+    //if the coordinates are valid OR there is a collision
     return false;
   } else {
     // Only simulating next move for our snake! 
@@ -294,12 +326,12 @@ function is_there_space(move: Directions, snake: model.BattleSnake, board: model
     //getting the valid moves. 
     const validMoves = foo(snake.head, snake.body, board);
     //If there are valid moves
-    if(validMoves.length > 0) {
-      const up = is_there_space(Directions.UP, new_snake, board, spaceNeeded-1)
-      const down = is_there_space(Directions.DOWN, new_snake, board, spaceNeeded-1)
-      const right = is_there_space(Directions.RIGHT, new_snake, board, spaceNeeded-1)
-      const left = is_there_space(Directions.LEFT, new_snake, board, spaceNeeded-1)
-      return (up || down || left || right)
+    if (validMoves.length > 0) {
+      const up = is_there_space(Directions.UP, new_snake, board, spaceNeeded - 1)
+      const down = is_there_space(Directions.DOWN, new_snake, board, spaceNeeded - 1)
+      const right = is_there_space(Directions.RIGHT, new_snake, board, spaceNeeded - 1)
+      const left = is_there_space(Directions.LEFT, new_snake, board, spaceNeeded - 1)
+      return true;
     } else {
       //return false
       return false;
