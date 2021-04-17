@@ -92,7 +92,7 @@ function handleEnd(request, response) {
 //TODO change return signature to provide all valid moves and directions as a Tuple
 // ie: return (Coordinate, Directions) []
 // TODO update {body} to be an array of bodies? since we need to evalute against both our body and opponent
-function foo(head: model.Coordinate, body: model.Coordinate[]): [model.Coordinate, Directions][] {
+function foo(head: model.Coordinate, body: model.Coordinate[], board?: model.Board): [model.Coordinate, Directions][] {
 
   const possibleMoves: [model.Coordinate, Directions][] = [
     [new model.Coordinate(head.x, head.y + 1), Directions.UP],
@@ -101,7 +101,7 @@ function foo(head: model.Coordinate, body: model.Coordinate[]): [model.Coordinat
     [new model.Coordinate(head.x + 1, head.y), Directions.RIGHT]
   ]
 
-  return possibleMoves.filter(([move]) => isValidCoordinate(move) && isNotCollision(move, body))
+  return possibleMoves.filter(([move]) => isValidCoordinate(move) && isNotCollision(move, body, board))
 }
 
 
@@ -150,20 +150,44 @@ function isFoodCloserToOurSnakeVsOpponentSnake(distanceFromOurSnakeHead: number,
 
 // --------------------- General Functions ------------------------------
 
+function getCoordsForNewMove(coordinate: model.Coordinate, move: Directions): model.Coordinate {
+  if(move === Directions.UP) {
+    return {x: coordinate.x, y: coordinate.y -1}
+  } else if(move === Directions.DOWN) {
+    return {x: coordinate.x, y: coordinate.y + 1}
+  } else if(move === Directions.LEFT) {
+    return {x: coordinate.x-1, y: coordinate.y}
+  } else if(move === Directions.RIGHT) {
+    return {x: coordinate.x+1, y: coordinate.y}
+  }
+
+}
 // Standard Board size is 11 by 11 (0 indexed ie 0-10 by 0-10)
 function isValidCoordinate(coordinate: model.Coordinate): boolean {
   return !(coordinate.x < 0 || coordinate.x > 10 || coordinate.y < 0 || coordinate.y > 10)
 }
 
 //TODO can probably refactor and use it for both self collision and opponent collision?
-function isNotCollision(coordinate: model.Coordinate, body: Array<model.Coordinate>): boolean {
+function isNotCollision(coordinate: model.Coordinate, body: Array<model.Coordinate>, board?: model.Board): boolean {
   for (let bodyCoordinate of body) {
     // would result in a collision
     if (coordinate.x == bodyCoordinate.x && coordinate.y == bodyCoordinate.y) {
       return false
     }
+  } if (board) {
+    //opponent collisions
+    const collisions = board.snakes.filter((snake) => {
+      return snake.body.filter((snakeBody) => {
+        if(coordinate.x === snakeBody.x && coordinate.y === snakeBody.y) {
+          return true;
+        }
+        return false;
+      });
+    });
+    if(collisions.length > 0) {
+      return false;
+    }
   }
-
   return true
 }
 
@@ -215,6 +239,70 @@ function getSuicideDirection(body: model.Coordinate[]): Directions {
       return Directions.LEFT
     } else {
       return Directions.RIGHT
+    }
+  }
+}
+
+// --------------------- MOVE SIMULATION ------------------------------
+
+function simulateNextMove(snake: model.BattleSnake, moveType): model.BattleSnake {
+  let new_head: model.Coordinate = null;
+  if(moveType === Directions.UP) {
+    new_head = {x: snake.head.x, y: snake.head.y - 1}
+  } else if(moveType === Directions.DOWN) {
+    new_head = {x: snake.head.x, y: snake.head.y + 1}
+  } else if(moveType === Directions.RIGHT) {
+    new_head = {x: snake.head.x, y: snake.head.y + 1}
+  } else if(moveType === Directions.LEFT) {
+    new_head = {x: snake.head.x, y: snake.head.y - 1}
+  }
+
+  const new_snake_body = snake.body.map((bodySquare) => {
+    //Stopping PBR
+    return {...bodySquare};
+  });
+
+  //add old snake.head onto first element of snake body
+  new_snake_body.push({...snake.head});
+  //Remove snake tail
+  new_snake_body.pop()
+
+  const next_turn_snake = {
+    ...snake,
+    body: new_snake_body,
+    head: new_head,
+    health: snake.health-1,
+    length: new_snake_body.length+1
+  }
+
+  return next_turn_snake;
+}
+
+// --------------------- is there space? ------------------------------
+
+
+function is_there_space(move: Directions, snake: model.BattleSnake, board: model.Board, spaceNeeded: number) {
+  const newCoords = getCoordsForNewMove(snake.head, move);
+  if(spaceNeeded === 0) {
+    return true;
+  } else if (!isValidCoordinate(newCoords) || !isNotCollision(newCoords, snake.body, board)) {
+    //if the coordinates are valid OR tere is a collision
+    return false;
+  } else {
+    // Only simulating next move for our snake! 
+    const new_snake = simulateNextMove(snake, move);
+    //getting the valid moves. 
+    const validMoves = foo(snake.head, snake.body, board);
+    //If there are valid moves
+    if(validMoves.length > 0) {
+      const up = is_there_space(Directions.UP, new_snake, board, spaceNeeded-1)
+      const down = is_there_space(Directions.DOWN, new_snake, board, spaceNeeded-1)
+      const right = is_there_space(Directions.RIGHT, new_snake, board, spaceNeeded-1)
+      const left = is_there_space(Directions.LEFT, new_snake, board, spaceNeeded-1)
+      return (up || down || left || right)
+    } else {
+      //return false
+      return false;
     }
   }
 }
